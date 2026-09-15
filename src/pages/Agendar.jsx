@@ -58,6 +58,8 @@ export default function Agendar() {
   const [enviando, setEnviando] = useState(false);
 
   async function carregarOpcoes() {
+    setStatus({ tipo: "", texto: "" });
+
     try {
       const res = await fetch("/api/opcoes");
       if (!res.ok) throw new Error("API indisponível");
@@ -81,7 +83,6 @@ export default function Agendar() {
         servico: atual.servico || opcoesFallback.servicos[0] || "",
         data: atual.data || opcoesFallback.datas[0] || "",
       }));
-      setStatus({ tipo: "error", texto: "Não foi possível carregar as datas." });
     }
   }
 
