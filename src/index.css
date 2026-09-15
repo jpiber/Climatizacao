@@ -128,6 +128,109 @@ a {
   border: 1px solid rgba(255, 138, 138, 0.3);
 }
 
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(3, 16, 28, 0.72);
+  backdrop-filter: blur(8px);
+}
+
+.confirm-modal {
+  width: min(100%, 440px);
+  padding: 32px;
+  border: 1px solid rgba(154, 235, 255, 0.25);
+  border-radius: 16px;
+  background: linear-gradient(145deg, #102c40, #0a1b2a);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+  animation: modal-in 0.2s ease-out;
+}
+
+.modal-icon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 20px;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.modal-icon-confirm {
+  color: #052033;
+  background: #9aebff;
+}
+
+.modal-icon-danger {
+  color: #ffd6d6;
+  background: rgba(255, 138, 138, 0.2);
+  border: 1px solid rgba(255, 138, 138, 0.45);
+}
+
+.confirm-modal h3 {
+  margin: 4px 0 10px;
+  color: var(--paper);
+  font-size: 1.45rem;
+}
+
+.modal-copy {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.modal-booking {
+  display: grid;
+  gap: 4px;
+  margin: 22px 0;
+  padding: 14px 16px;
+  border-left: 3px solid var(--gold);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.modal-booking strong {
+  color: var(--paper);
+}
+
+.modal-booking span {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 520px) {
+  .confirm-modal { padding: 24px; }
+  .modal-actions { display: grid; grid-template-columns: 1fr; }
+  .modal-actions .btn { width: 100%; }
+}
+
 .hero {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
@@ -311,6 +414,60 @@ textarea:focus {
 .alert.ok {
   color: var(--ok);
   background: rgba(125, 255, 195, 0.08);
+}
+
+.booking-success {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 20px;
+  border: 1px solid rgba(154, 235, 255, 0.25);
+  border-radius: 16px;
+  color: var(--ok);
+  background: linear-gradient(145deg, #102c40, #0a1b2a);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.2);
+  animation: success-in 0.25s ease-out;
+}
+
+.success-check {
+  display: grid;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 50%;
+  color: #062319;
+  font-weight: 800;
+  background: var(--ok);
+  box-shadow: 0 0 0 6px rgba(125, 255, 195, 0.08);
+}
+
+.booking-success strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--paper);
+  font-size: 1.15rem;
+}
+
+.booking-success p,
+.booking-success span {
+  display: block;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.booking-success p {
+  color: var(--paper);
+}
+
+.booking-success span {
+  margin-top: 3px;
+  font-size: 0.9rem;
+}
+
+@keyframes success-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .hint {

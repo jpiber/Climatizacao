@@ -6,7 +6,7 @@ import { getStore } from "@netlify/blobs";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_FILE = path.join(__dirname, "data.json");
 
-export const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "2026";
+export const ADMIN_PASSWORD = String(process.env.ADMIN_PASSWORD || "2026").trim();
 export const HORARIOS = [
   "08:00",
   "09:00",

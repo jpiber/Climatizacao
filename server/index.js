@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { randomUUID } from "crypto";
+import { enviarEmailConfirmacao } from "./email.js";
 import {
   ADMIN_PASSWORD,
   HORARIOS,
@@ -14,6 +15,8 @@ import {
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+export { app };
 
 app.get("/api/opcoes", async (_req, res) => {
   const data = await loadData();
@@ -51,6 +54,9 @@ app.post("/api/agendamentos", async (req, res) => {
   if (!nome?.trim() || !telefone?.trim() || !email?.trim() || !endereco?.trim() || !servico || !data || !horario) {
     return res.status(400).json({ erro: "Preencha todos os campos." });
   }
+  if (!String(email).trim().includes("@")) {
+    return res.status(400).json({ erro: "Informe um e-mail contendo @." });
+  }
   if (!SERVICOS.includes(servico)) {
     return res.status(400).json({ erro: "Tipo de serviço inválido." });
   }
@@ -77,16 +83,23 @@ app.post("/api/agendamentos", async (req, res) => {
     servico,
     data,
     horario,
+    status: "pendente",
     criadoEm: new Date().toISOString(),
   };
 
   store.agendamentos.push(agendamento);
   await saveData(store);
-  res.status(201).json(agendamento);
+  let emailEnviado = false;
+  try {
+    emailEnviado = (await enviarEmailConfirmacao(agendamento)).enviado;
+  } catch (error) {
+    console.error("Não foi possível enviar o e-mail de confirmação:", error.message);
+  }
+  res.status(201).json({ ...agendamento, emailEnviado });
 });
 
 app.post("/api/admin/login", (req, res) => {
-  const { senha } = req.body || {};
+  const senha = String(req.body?.senha ?? "").trim();
   if (senha !== ADMIN_PASSWORD) {
     return res.status(401).json({ erro: "Senha incorreta." });
   }
@@ -110,6 +123,18 @@ app.get("/api/admin/agendamentos", exigirAdmin, async (_req, res) => {
   res.json(lista);
 });
 
+app.post("/api/admin/agendamentos/:id/confirmar", exigirAdmin, async (req, res) => {
+  const store = await loadData();
+  const agendamento = store.agendamentos.find((item) => item.id === req.params.id);
+  if (!agendamento) {
+    return res.status(404).json({ erro: "Agendamento não encontrado." });
+  }
+
+  agendamento.status = "confirmado";
+  await saveData(store);
+  res.json(agendamento);
+});
+
 app.delete("/api/admin/agendamentos/:id", exigirAdmin, async (req, res) => {
   const store = await loadData();
   const before = store.agendamentos.length;
@@ -122,6 +147,8 @@ app.delete("/api/admin/agendamentos/:id", exigirAdmin, async (req, res) => {
 });
 
 const PORT = 3002;
-app.listen(PORT, () => {
-  console.log(`API de agendamentos em http://127.0.0.1:${PORT}`);
-});
+if (process.env.NODE_ENV !== "test") {
+  app.listen(PORT, () => {
+    console.log(`API de agendamentos em http://127.0.0.1:${PORT}`);
+  });
+}

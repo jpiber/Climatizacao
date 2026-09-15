@@ -56,6 +56,7 @@ export default function Agendar() {
   });
   const [form, setForm] = useState(formVazio);
   const [status, setStatus] = useState({ tipo: "", texto: "" });
+  const [agendamentoConfirmado, setAgendamentoConfirmado] = useState(null);
   const [enviando, setEnviando] = useState(false);
 
   async function carregarOpcoes() {
@@ -113,6 +114,15 @@ export default function Agendar() {
   async function enviar(e) {
     e.preventDefault();
     setStatus({ tipo: "", texto: "" });
+    setAgendamentoConfirmado(null);
+
+    const emailValido = form.email.trim().includes("@");
+    if (!emailValido) {
+      setStatus({ tipo: "error", texto: "Informe um e-mail contendo @." });
+      setEnviando(false);
+      return;
+    }
+
     setEnviando(true);
     try {
       const res = await fetch("/api/agendamentos", {
@@ -129,10 +139,7 @@ export default function Agendar() {
         await carregarOpcoes();
         return;
       }
-      setStatus({
-        tipo: "ok",
-        texto: `Agendado: ${data.servico} em ${formatarData(data.data)} às ${data.horario}.`,
-      });
+      setAgendamentoConfirmado(data);
       setForm((atual) => ({
         ...atual,
         nome: "",
@@ -183,10 +190,10 @@ export default function Agendar() {
         <label>
           E-mail
           <input
-            type="email"
+            type="text"
+            inputMode="email"
             required
             value={form.email}
-            pattern=".+@.+\\..+"
             onChange={(e) => atualizar("email", e.target.value)}
             placeholder="seuemail@email.com"
           />
@@ -250,6 +257,23 @@ export default function Agendar() {
           </label>
         </div>
 
+        {agendamentoConfirmado ? (
+          <div className="booking-success" role="status">
+            <div className="success-check">✓</div>
+            <div>
+              <p className="eyebrow">Aviso de agendamento</p>
+              <strong>Agendamento confirmado!</strong>
+              <p>
+                {agendamentoConfirmado.servico} em {formatarData(agendamentoConfirmado.data)} às {agendamentoConfirmado.horario}.
+              </p>
+              <span>
+                Seu horário foi reservado com sucesso. {agendamentoConfirmado.emailEnviado
+                  ? "Enviamos os detalhes para o seu e-mail."
+                  : "O envio do e-mail ainda não está configurado neste ambiente."}
+              </span>
+            </div>
+          </div>
+        ) : null}
         {status.texto ? <div className={`alert ${status.tipo}`}>{status.texto}</div> : null}
 
         <button className="btn btn-primary" type="submit" disabled={enviando || !form.horario}>

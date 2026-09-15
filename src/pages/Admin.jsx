@@ -14,6 +14,7 @@ export default function Admin() {
   const [token, setToken] = useState(() => sessionStorage.getItem("adminToken") || "");
   const [lista, setLista] = useState([]);
   const [erro, setErro] = useState("");
+  const [acaoPendente, setAcaoPendente] = useState(null);
 
   async function carregar(auth = token) {
     const res = await fetch("/api/admin/agendamentos", {
@@ -45,12 +46,24 @@ export default function Admin() {
     await carregar(data.token);
   }
 
-  async function cancelar(id) {
-    if (!confirm("Cancelar este horário? Ele volta a ficar livre para novos clientes.")) return;
-    const res = await fetch(`/api/admin/agendamentos/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
+  function abrirConfirmacao(tipo, agendamento) {
+    setAcaoPendente({ tipo, agendamento });
+  }
+
+  async function executarAcao() {
+    if (!acaoPendente) return;
+
+    const { tipo, agendamento } = acaoPendente;
+    const res = await fetch(
+      tipo === "confirmar"
+        ? `/api/admin/agendamentos/${agendamento.id}/confirmar`
+        : `/api/admin/agendamentos/${agendamento.id}`,
+      {
+        method: tipo === "confirmar" ? "POST" : "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    setAcaoPendente(null);
     if (res.ok) await carregar();
   }
 
@@ -119,7 +132,8 @@ export default function Admin() {
                 <th>Cliente</th>
                 <th>Telefone</th>
                 <th>Endereço</th>
-                <th></th>
+                <th>Status</th>
+                <th>Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -132,9 +146,22 @@ export default function Admin() {
                   <td>{a.telefone}</td>
                   <td>{a.endereco}</td>
                   <td>
-                    <button className="btn btn-danger" type="button" onClick={() => cancelar(a.id)}>
-                      Liberar
-                    </button>
+                    {a.status === "confirmado" ? "Confirmado" : "Pendente"}
+                  </td>
+                  <td>
+                    <div className="action-buttons">
+                      <button
+                        className="btn btn-primary"
+                        type="button"
+                        onClick={() => abrirConfirmacao("confirmar", a)}
+                        disabled={a.status === "confirmado"}
+                      >
+                        Confirmar
+                      </button>
+                      <button className="btn btn-danger" type="button" onClick={() => abrirConfirmacao("cancelar", a)}>
+                        Cancelar
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -142,6 +169,49 @@ export default function Admin() {
           </table>
         </div>
       )}
+
+      {acaoPendente ? (
+        <div className="modal-backdrop" role="presentation" onClick={() => setAcaoPendente(null)}>
+          <div
+            className="confirm-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="confirmacao-titulo"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={`modal-icon ${acaoPendente.tipo === "confirmar" ? "modal-icon-confirm" : "modal-icon-danger"}`}>
+              {acaoPendente.tipo === "confirmar" ? "✓" : "!"}
+            </div>
+            <p className="eyebrow">Atenção</p>
+            <h3 id="confirmacao-titulo">
+              {acaoPendente.tipo === "confirmar" ? "Confirmar este agendamento?" : "Cancelar este agendamento?"}
+            </h3>
+            <p className="modal-copy">
+              {acaoPendente.tipo === "confirmar"
+                ? "O cliente ficará marcado como confirmado na sua agenda."
+                : "Este horário será liberado para outro cliente e não poderá ser recuperado."}
+            </p>
+            <div className="modal-booking">
+              <strong>{acaoPendente.agendamento.nome}</strong>
+              <span>
+                {formatarData(acaoPendente.agendamento.data)} às {acaoPendente.agendamento.horario}
+              </span>
+            </div>
+            <div className="modal-actions">
+              <button className="btn btn-ghost" type="button" onClick={() => setAcaoPendente(null)}>
+                Voltar
+              </button>
+              <button
+                className={`btn ${acaoPendente.tipo === "confirmar" ? "btn-primary" : "btn-danger"}`}
+                type="button"
+                onClick={executarAcao}
+              >
+                {acaoPendente.tipo === "confirmar" ? "Sim, confirmar" : "Sim, cancelar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

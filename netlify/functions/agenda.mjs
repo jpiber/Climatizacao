@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import { enviarEmailConfirmacao } from "../../server/email.js";
 import {
   ADMIN_PASSWORD,
   HORARIOS,
@@ -76,6 +77,9 @@ export async function handler(event) {
     if (!nome?.trim() || !telefone?.trim() || !email?.trim() || !endereco?.trim() || !servico || !data || !horario) {
       return jsonResponse(400, { erro: "Preencha todos os campos." });
     }
+    if (!String(email).trim().includes("@")) {
+      return jsonResponse(400, { erro: "Informe um e-mail contendo @." });
+    }
     if (!SERVICOS.includes(servico)) {
       return jsonResponse(400, { erro: "Tipo de serviço inválido." });
     }
@@ -102,16 +106,23 @@ export async function handler(event) {
       servico,
       data,
       horario,
+      status: "pendente",
       criadoEm: new Date().toISOString(),
     };
 
     store.agendamentos.push(agendamento);
     await saveData(store);
-    return jsonResponse(201, agendamento);
+    let emailEnviado = false;
+    try {
+      emailEnviado = (await enviarEmailConfirmacao(agendamento)).enviado;
+    } catch (error) {
+      console.error("Não foi possível enviar o e-mail de confirmação:", error.message);
+    }
+    return jsonResponse(201, { ...agendamento, emailEnviado });
   }
 
   if (route === "/api/admin/login" && event.httpMethod === "POST") {
-    const { senha } = body;
+    const senha = String(body?.senha ?? "").trim();
     if (senha !== ADMIN_PASSWORD) {
       return jsonResponse(401, { erro: "Senha incorreta." });
     }
@@ -129,6 +140,24 @@ export async function handler(event) {
       (a, b) => `${a.data} ${a.horario}`.localeCompare(`${b.data} ${b.horario}`)
     );
     return jsonResponse(200, lista);
+  }
+
+  if (route.startsWith("/api/admin/agendamentos/") && route.endsWith("/confirmar") && event.httpMethod === "POST") {
+    const token = (event.headers?.authorization || "").replace("Bearer ", "");
+    if (token !== ADMIN_PASSWORD) {
+      return jsonResponse(401, { erro: "Não autorizado." });
+    }
+
+    const id = route.slice("/api/admin/agendamentos/".length, -"/confirmar".length);
+    const store = await loadData();
+    const agendamento = store.agendamentos.find((item) => item.id === id);
+    if (!agendamento) {
+      return jsonResponse(404, { erro: "Agendamento não encontrado." });
+    }
+
+    agendamento.status = "confirmado";
+    await saveData(store);
+    return jsonResponse(200, agendamento);
   }
 
   if (route.startsWith("/api/admin/agendamentos/") && event.httpMethod === "DELETE") {
