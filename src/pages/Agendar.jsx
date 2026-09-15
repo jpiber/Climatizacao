@@ -30,7 +30,16 @@ export default function Agendar() {
   const [enviando, setEnviando] = useState(false);
 
   async function carregarOpcoes() {
-    const data = await fetch("/api/opcoes").then((r) => r.json());
+    const res = await fetch("/api/opcoes");
+    if (!res.ok) {
+      throw new Error("API indisponível");
+    }
+
+    const data = await res.json();
+    if (!data || !Array.isArray(data.servicos) || !Array.isArray(data.datas)) {
+      throw new Error("Dados inválidos da API");
+    }
+
     setOpcoes(data);
     setForm((atual) => ({
       ...atual,

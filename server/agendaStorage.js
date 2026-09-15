@@ -47,12 +47,33 @@ export function slotOcupado(agendamentos, data, horario, exceptId) {
   );
 }
 
+function getBlobStore() {
+  if (!process.env.NETLIFY) return null;
+
+  try {
+    const store = getStore({ name: "agenda-store" });
+    if (!store || typeof store.get !== "function" || typeof store.set !== "function") {
+      return null;
+    }
+    return store;
+  } catch {
+    return null;
+  }
+}
+
 export async function loadData() {
   if (process.env.NETLIFY) {
-    const store = getStore({ name: "agenda-store" });
-    const raw = await store.get("agenda-data.json");
-    if (!raw) return { agendamentos: [] };
-    return JSON.parse(raw);
+    try {
+      const store = getBlobStore();
+      if (!store) {
+        return { agendamentos: [] };
+      }
+      const raw = await store.get("agenda-data.json");
+      if (!raw) return { agendamentos: [] };
+      return JSON.parse(raw);
+    } catch {
+      return { agendamentos: [] };
+    }
   }
 
   try {
@@ -65,9 +86,18 @@ export async function loadData() {
 
 export async function saveData(data) {
   if (process.env.NETLIFY) {
-    const store = getStore({ name: "agenda-store" });
-    await store.set("agenda-data.json", JSON.stringify(data, null, 2));
-    return;
+    try {
+      const store = getBlobStore();
+      if (!store) {
+        globalThis.__agendaFallback = data;
+        return;
+      }
+      await store.set("agenda-data.json", JSON.stringify(data, null, 2));
+      return;
+    } catch {
+      globalThis.__agendaFallback = data;
+      return;
+    }
   }
 
   await fs.mkdir(path.dirname(DATA_FILE), { recursive: true });
