@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import {
   ADMIN_PASSWORD,
   HORARIOS,
@@ -22,7 +23,7 @@ function jsonResponse(statusCode, body) {
 }
 
 function getRoute(pathname) {
-  const normalized = pathname.replace(/\\/+/g, "/");
+  const normalized = pathname.replace(/\/+/g, "/");
   const clean = normalized.replace(/^\/+/, "");
   if (!clean || clean === ".netlify/functions/agenda") return "/";
   return `/${clean}`.replace("/.netlify/functions/agenda", "");
@@ -93,7 +94,7 @@ export async function handler(event) {
     }
 
     const agendamento = {
-      id: crypto.randomUUID(),
+      id: randomUUID(),
       nome: nome.trim(),
       telefone: telefone.trim(),
       endereco: endereco.trim(),
