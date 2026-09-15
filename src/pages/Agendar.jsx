@@ -9,6 +9,34 @@ function formatarData(iso) {
   });
 }
 
+function gerarDatasFallback() {
+  const datas = [];
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  let cursor = new Date(hoje);
+  cursor.setDate(cursor.getDate() + 1);
+
+  while (datas.length < 14) {
+    const dia = cursor.getDay();
+    if (dia !== 0) {
+      const yyyy = cursor.getFullYear();
+      const mm = String(cursor.getMonth() + 1).padStart(2, "0");
+      const dd = String(cursor.getDate()).padStart(2, "0");
+      datas.push(`${yyyy}-${mm}-${dd}`);
+    }
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  return datas;
+}
+
+const opcoesFallback = {
+  servicos: ["Instalação", "Manutenção"],
+  datas: gerarDatasFallback(),
+  horarios: ["08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00", "17:00"],
+  ocupados: [],
+};
+
 const formVazio = {
   nome: "",
   telefone: "",
@@ -30,22 +58,31 @@ export default function Agendar() {
   const [enviando, setEnviando] = useState(false);
 
   async function carregarOpcoes() {
-    const res = await fetch("/api/opcoes");
-    if (!res.ok) {
-      throw new Error("API indisponível");
-    }
+    try {
+      const res = await fetch("/api/opcoes");
+      if (!res.ok) throw new Error("API indisponível");
 
-    const data = await res.json();
-    if (!data || !Array.isArray(data.servicos) || !Array.isArray(data.datas)) {
-      throw new Error("Dados inválidos da API");
-    }
+      const data = await res.json();
+      if (!data || !Array.isArray(data.servicos) || !Array.isArray(data.datas)) {
+        throw new Error("Dados inválidos da API");
+      }
 
-    setOpcoes(data);
-    setForm((atual) => ({
-      ...atual,
-      servico: atual.servico || data.servicos[0] || "",
-      data: atual.data || data.datas[0] || "",
-    }));
+      setOpcoes(data);
+      setForm((atual) => ({
+        ...atual,
+        servico: atual.servico || data.servicos[0] || "",
+        data: atual.data || data.datas[0] || "",
+      }));
+      return;
+    } catch {
+      setOpcoes(opcoesFallback);
+      setForm((atual) => ({
+        ...atual,
+        servico: atual.servico || opcoesFallback.servicos[0] || "",
+        data: atual.data || opcoesFallback.datas[0] || "",
+      }));
+      setStatus({ tipo: "error", texto: "Não foi possível carregar as datas." });
+    }
   }
 
   useEffect(() => {

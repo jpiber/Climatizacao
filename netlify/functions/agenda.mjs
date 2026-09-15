@@ -23,10 +23,10 @@ function jsonResponse(statusCode, body) {
 }
 
 function getRoute(pathname) {
-  const normalized = pathname.replace(/\/+/g, "/");
-  const clean = normalized.replace(/^\/+/, "");
-  if (!clean || clean === ".netlify/functions/agenda") return "/";
-  return `/${clean}`.replace("/.netlify/functions/agenda", "");
+  const normalized = (pathname || "/").replace(/\/+/g, "/");
+  const clean = normalized.replace(/^\/+/, "").replace(/^\.netlify\/functions\/agenda\/?/, "");
+  if (!clean) return "/";
+  return `/${clean}`;
 }
 
 function parseBody(event) {
