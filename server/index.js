@@ -46,9 +46,9 @@ app.get("/api/horarios", async (req, res) => {
 });
 
 app.post("/api/agendamentos", async (req, res) => {
-  const { nome, telefone, endereco, servico, data, horario } = req.body || {};
+  const { nome, telefone, email, endereco, servico, data, horario } = req.body || {};
 
-  if (!nome?.trim() || !telefone?.trim() || !endereco?.trim() || !servico || !data || !horario) {
+  if (!nome?.trim() || !telefone?.trim() || !email?.trim() || !endereco?.trim() || !servico || !data || !horario) {
     return res.status(400).json({ erro: "Preencha todos os campos." });
   }
   if (!SERVICOS.includes(servico)) {
@@ -72,6 +72,7 @@ app.post("/api/agendamentos", async (req, res) => {
     id: randomUUID(),
     nome: nome.trim(),
     telefone: telefone.trim(),
+    email: email.trim(),
     endereco: endereco.trim(),
     servico,
     data,

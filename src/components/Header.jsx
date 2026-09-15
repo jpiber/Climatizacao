@@ -5,7 +5,7 @@ export default function Header() {
     <header className="header">
       <NavLink to="/" className="brand">
         <span className="brand-mark">PC</span>
-        Climatização
+        Climatização JS
       </NavLink>
       <nav className="nav">
         <NavLink to="/" end>

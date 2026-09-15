@@ -40,6 +40,7 @@ const opcoesFallback = {
 const formVazio = {
   nome: "",
   telefone: "",
+  email: "",
   endereco: "",
   servico: "",
   data: "",
@@ -117,7 +118,10 @@ export default function Agendar() {
       const res = await fetch("/api/agendamentos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          email: form.email.trim(),
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -133,6 +137,7 @@ export default function Agendar() {
         ...atual,
         nome: "",
         telefone: "",
+        email: "",
         endereco: "",
         horario: "",
       }));
@@ -170,8 +175,20 @@ export default function Agendar() {
           <input
             required
             value={form.telefone}
-            onChange={(e) => atualizar("telefone", e.target.value)}
+            maxLength={15}
+            onChange={(e) => atualizar("telefone", e.target.value.slice(0, 15))}
             placeholder="(00) 00000-0000"
+          />
+        </label>
+        <label>
+          E-mail
+          <input
+            type="email"
+            required
+            value={form.email}
+            pattern=".+@.+\\..+"
+            onChange={(e) => atualizar("email", e.target.value)}
+            placeholder="seuemail@email.com"
           />
         </label>
         <label>
