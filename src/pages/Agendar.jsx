@@ -167,7 +167,7 @@ export default function Agendar() {
         </p>
       </div>
 
-      <form className="card" onSubmit={enviar}>
+      <form className="card" noValidate onSubmit={enviar}>
         <label>
           Nome
           <input
