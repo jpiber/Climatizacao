@@ -51,11 +51,8 @@ app.get("/api/horarios", async (req, res) => {
 app.post("/api/agendamentos", async (req, res) => {
   const { nome, telefone, email, endereco, servico, data, horario } = req.body || {};
 
-  if (!nome?.trim() || !telefone?.trim() || !email?.trim() || !endereco?.trim() || !servico || !data || !horario) {
+  if (!nome?.trim() || !telefone?.trim() || !endereco?.trim() || !servico || !data || !horario) {
     return res.status(400).json({ erro: "Preencha todos os campos." });
-  }
-  if (!String(email).trim().includes("@")) {
-    return res.status(400).json({ erro: "Informe um e-mail contendo @." });
   }
   if (!SERVICOS.includes(servico)) {
     return res.status(400).json({ erro: "Tipo de serviço inválido." });
@@ -78,7 +75,7 @@ app.post("/api/agendamentos", async (req, res) => {
     id: randomUUID(),
     nome: nome.trim(),
     telefone: telefone.trim(),
-    email: email.trim(),
+    email: String(email || "").trim(),
     endereco: endereco.trim(),
     servico,
     data,

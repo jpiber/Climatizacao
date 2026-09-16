@@ -54,6 +54,10 @@ export function criarEmailConfirmacao(agendamento) {
 }
 
 export async function enviarEmailConfirmacao(agendamento) {
+  if (!agendamento.email) {
+    return { enviado: false, motivo: "E-mail não informado" };
+  }
+
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
     return { enviado: false, motivo: "RESEND_API_KEY não configurada" };

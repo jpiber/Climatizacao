@@ -116,13 +116,6 @@ export default function Agendar() {
     setStatus({ tipo: "", texto: "" });
     setAgendamentoConfirmado(null);
 
-    const emailValido = form.email.trim().includes("@");
-    if (!emailValido) {
-      setStatus({ tipo: "error", texto: "Informe um e-mail contendo @." });
-      setEnviando(false);
-      return;
-    }
-
     setEnviando(true);
     try {
       const res = await fetch("/api/agendamentos", {
@@ -191,8 +184,6 @@ export default function Agendar() {
           E-mail
           <input
             type="text"
-            inputMode="email"
-            required
             value={form.email}
             onChange={(e) => atualizar("email", e.target.value)}
             placeholder="seuemail@email.com"

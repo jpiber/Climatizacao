@@ -74,11 +74,8 @@ export async function handler(event) {
   if (route === "/api/agendamentos" && event.httpMethod === "POST") {
     const { nome, telefone, email, endereco, servico, data, horario } = body;
 
-    if (!nome?.trim() || !telefone?.trim() || !email?.trim() || !endereco?.trim() || !servico || !data || !horario) {
+    if (!nome?.trim() || !telefone?.trim() || !endereco?.trim() || !servico || !data || !horario) {
       return jsonResponse(400, { erro: "Preencha todos os campos." });
-    }
-    if (!String(email).trim().includes("@")) {
-      return jsonResponse(400, { erro: "Informe um e-mail contendo @." });
     }
     if (!SERVICOS.includes(servico)) {
       return jsonResponse(400, { erro: "Tipo de serviço inválido." });
@@ -101,7 +98,7 @@ export async function handler(event) {
       id: randomUUID(),
       nome: nome.trim(),
       telefone: telefone.trim(),
-      email: email.trim(),
+      email: String(email || "").trim(),
       endereco: endereco.trim(),
       servico,
       data,
