@@ -1,5 +1,4 @@
 import { randomUUID } from "crypto";
-import { enviarEmailConfirmacao } from "../../server/email.js";
 import {
   ADMIN_PASSWORD,
   HORARIOS,
@@ -9,6 +8,63 @@ import {
   saveData,
   slotOcupado,
 } from "../../server/agendaStorage.js";
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function formatarDataEmail(data) {
+  const [ano, mes, dia] = data.split("-").map(Number);
+  return new Date(ano, mes - 1, dia).toLocaleDateString("pt-BR", {
+    weekday: "long",
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+async function enviarEmailConfirmacao(agendamento) {
+  if (!agendamento.email || !process.env.RESEND_API_KEY) {
+    return { enviado: false };
+  }
+
+  const detalhes = [
+    ["Serviço", agendamento.servico],
+    ["Data", formatarDataEmail(agendamento.data)],
+    ["Horário", agendamento.horario],
+    ["Nome", agendamento.nome],
+    ["Telefone", agendamento.telefone],
+    ["E-mail", agendamento.email],
+    ["Endereço", agendamento.endereco],
+  ]
+    .map(([rotulo, valor]) => `<p><strong>${escapeHtml(rotulo)}:</strong> ${escapeHtml(valor)}</p>`)
+    .join("");
+
+  const resposta = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: process.env.EMAIL_FROM || "Climatização JS <onboarding@resend.dev>",
+      to: [agendamento.email],
+      subject: `Agendamento recebido - ${agendamento.servico}`,
+      html: `<div style="font-family:Arial,sans-serif"><h1>Agendamento recebido!</h1><p>Olá, ${escapeHtml(agendamento.nome)}.</p>${detalhes}</div>`,
+    }),
+  });
+
+  if (!resposta.ok) {
+    throw new Error(`Resend ${resposta.status}`);
+  }
+
+  return { enviado: true };
+}
 
 function jsonResponse(statusCode, body) {
   return {
